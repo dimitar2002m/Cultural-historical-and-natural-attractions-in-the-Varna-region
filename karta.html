@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="css/leaflet.css">
+    <link rel="stylesheet" href="css/qgis2web.css">
+    <link rel="stylesheet" href="css/site.css">
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; }
+        html, body { height: 100%; }
+        #map { width: 100%; }
+        .map-title {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255,255,255,0.92);
+            padding: 8px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            pointer-events: none;
+            text-align: center;
+            max-width: 90%;
+        }
+        .leaflet-popup-content {
+            margin: 12px 14px;
+            min-width: 220px;
+            max-width: 320px;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .popup-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #c9a227;
+            padding-bottom: 6px;
+        }
+        .popup-row {
+            margin: 4px 0;
+        }
+        .popup-label {
+            font-weight: 600;
+            color: #555;
+            display: inline-block;
+            min-width: 72px;
+        }
+        .popup-type {
+            display: inline-block;
+            background: #f0e6d2;
+            color: #5c4a1f;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .popup-type.nature {
+            background: #d4edda;
+            color: #155724;
+        }
+        @media (max-width: 700px) { .legend { display: none; } }
+        .legend {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .legend-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+        }
+        .legend-icon span, .icon-pin span { font-family: "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif; }
+        .legend-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .marker-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+        .icon-pin {
+            width: 36px;
+            height: 36px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            border: 2px solid #fff;
+        }
+        .icon-pin span {
+            transform: rotate(45deg);
+            font-size: 16px;
+            line-height: 1;
+        }
+        .icon-cultural { background: #8B4513; }
+        .icon-museum { background: #6B3FA0; }
+        .icon-fortress { background: #4A5568; }
+        .icon-church { background: #2B6CB0; }
+        .icon-monastery { background: #2C5282; }
+        .icon-megalith { background: #744210; }
+        .icon-attraction { background: #C05621; }
+        .icon-nature { background: #276749; }
+        .icon-waterfall { background: #2B6CB0; }
+        .icon-park { background: #38A169; }
+        .icon-beach { background: #D69E2E; }
+        .icon-cave { background: #553C9A; }
+        .icon-viewpoint { background: #DD6B20; }
+        .icon-trail { background: #319795; }
+    </style>
+    <title>Карта – Открий Варна</title>
+</head>
+<body class="map-page">
+<header class="site-header"><div class="container bar"><a class="logo" href="index.html"><span class="mark">⚓</span><span>Открий Варна<small>КАРТА · ОБЕКТИ · МАРШРУТИ</small></span></a><button class="nav-toggle" aria-label="Меню" aria-expanded="false">☰</button><nav aria-label="Основна навигация"><ul class="nav"><li><a href="index.html">Начало</a></li><li><a href="karta.html" class="active" aria-current="page">Карта</a></li><li><a href="obekti.html">Обекти</a></li><li><a href="marshruti.html">Маршрути</a></li><li><a href="za-proekta.html">За проекта</a></li></ul></nav></div></header>
+    <div id="map"></div>
+    <script src="js/qgis2web_expressions.js"></script>
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet-hash.js"></script>
+    <script src="js/Autolinker.min.js"></script>
+    <script src="data/_1.js"></script>
+    <script src="data/_2.js"></script>
+    <script src="data/_3.js"></script>
+    <script src="data/_boundary.js"></script>
+    <script>
+        var varnaBounds = L.geoJSON(json__boundary).getBounds();
+        var map = L.map('map', {
+            zoomControl: false,
+            maxZoom: 18,
+            minZoom: 9,
+            maxBounds: varnaBounds.pad(0.15),
+            maxBoundsViscosity: 1.0
+        });
+
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+
+        map.attributionControl.setPrefix(
+            '<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> · ' +
+            '<a href="https://leafletjs.com">Leaflet</a> · <a href="https://qgis.org">QGIS</a>'
+        );
+
+        var autolinker = new Autolinker({ truncate: { length: 40, location: 'smart' } });
+
+        // Base layers
+        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19
+        });
+        var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenTopoMap (CC-BY-SA)',
+            maxZoom: 17
+        });
+        var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap, © <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        });
+        var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri',
+            maxZoom: 18
+        });
+        var sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri, Maxar, Earthstar Geographics',
+            maxZoom: 18
+        });
+        // OSM и CARTO често блокират заявки от файл (file://) без Referer. Тогава минаваме автоматично
+        // към следващата фонова карта. Най-сигурно е картата да се отваря през http(s) (напр. GitHub Pages).
+        var chain = location.protocol === 'file:' ? [esri, topo, carto, osm] : [carto, osm, esri, topo];
+        var active = 0;
+        function useBase(i) {
+            if (i >= chain.length) return;
+            if (map.hasLayer(chain[active])) map.removeLayer(chain[active]);
+            active = i;
+            chain[i].addTo(map);
+        }
+        chain.forEach(function (lyr, i) {
+            var ok = 0, bad = 0;
+            lyr.on('tileload', function () { ok++; });
+            lyr.on('tileerror', function () {
+                bad++;
+                if (ok === 0 && bad >= 4 && active === i && map.hasLayer(lyr)) useBase(i + 1);
+            });
+        });
+        chain[0].addTo(map);
+
+        // Icon helper – pin style with Font Awesome
+        function makeIcon(emoji, colorClass) {
+            return L.divIcon({
+                className: 'marker-icon',
+                html: '<div class="icon-pin ' + colorClass + '"><span>' + emoji + '</span></div>',
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -32]
+            });
+        }
+
+        function iconForCultural(props) {
+            var t = (props['Тип'] || '').toLowerCase();
+            if (t.indexOf('музей') >= 0) return makeIcon('🏛️', 'icon-museum');
+            if (t.indexOf('крепост') >= 0) return makeIcon('🏰', 'icon-fortress');
+            if (t.indexOf('катедрал') >= 0 || t.indexOf('църква') >= 0) return makeIcon('⛪', 'icon-church');
+            if (t.indexOf('манастир') >= 0 || t.indexOf('параклис') >= 0) return makeIcon('🕍', 'icon-monastery');
+            if (t.indexOf('мегалит') >= 0 || t.indexOf('скален') >= 0) return makeIcon('⛰️', 'icon-megalith');
+            if (t.indexOf('атракция') >= 0 || t.indexOf('делфин') >= 0) return makeIcon('🐬', 'icon-attraction');
+            if (t.indexOf('резиденц') >= 0 || t.indexOf('дворец') >= 0) return makeIcon('🏛️', 'icon-cultural');
+            if (t.indexOf('терми') >= 0) return makeIcon('♨️', 'icon-cultural');
+            return makeIcon('📍', 'icon-cultural');
+        }
+
+        function iconForNatural(props) {
+            var t = (props['Тип'] || '').toLowerCase();
+            if (t.indexOf('водопад') >= 0) return makeIcon('💧', 'icon-waterfall');
+            if (t.indexOf('парк') >= 0 || t.indexOf('градина') >= 0 || t.indexOf('гора') >= 0 || t.indexOf('кория') >= 0)
+                return makeIcon('🌳', 'icon-park');
+            if (t.indexOf('плаж') >= 0) return makeIcon('🏖️', 'icon-beach');
+            if (t.indexOf('пещера') >= 0) return makeIcon('🕳️', 'icon-cave');
+            if (t.indexOf('панорам') >= 0 || t.indexOf('площадка') >= 0) return makeIcon('🔭', 'icon-viewpoint');
+            if (t.indexOf('екопътека') >= 0 || t.indexOf('пътека') >= 0) return makeIcon('🥾', 'icon-trail');
+            if (t.indexOf('защитен') >= 0 || t.indexOf('побити') >= 0) return makeIcon('⛰️', 'icon-nature');
+            return makeIcon('🍃', 'icon-nature');
+        }
+
+        function popupContent(feature, isNature) {
+            var p = feature.properties;
+            var typeClass = isNature ? 'popup-type nature' : 'popup-type';
+            var html = '<div class="popup-title">' + (p['Име'] || '') + '</div>';
+            if (p['Тип']) {
+                html += '<div class="popup-row"><span class="' + typeClass + '">' + p['Тип'] + '</span></div>';
+            }
+            if (p['Община']) {
+                html += '<div class="popup-row"><span class="popup-label">Община:</span> ' + p['Община'] + '</div>';
+            }
+            if (p['Описание']) {
+                html += '<div class="popup-row" style="margin-top:8px;color:#333;">' + p['Описание'] + '</div>';
+            }
+            return html;
+        }
+
+        var registry = {};
+        // Cultural layer
+        var layerCultural = L.geoJSON(json__1, {
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, { icon: iconForCultural(feature.properties) });
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(popupContent(feature, false), { maxWidth: 340 });
+                registry['c-' + feature.properties.id] = layer;
+            }
+        });
+
+        // Natural layer
+        var layerNatural = L.geoJSON(json__2, {
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, { icon: iconForNatural(feature.properties) });
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(popupContent(feature, true), { maxWidth: 340 });
+                registry['n-' + feature.properties.id] = layer;
+            }
+        });
+
+        layerCultural.addTo(map);
+        layerNatural.addTo(map);
+
+        // Граница на област Варна: затъмняване на всичко извън нея
+        var ring = json__boundary.geometry.coordinates[0].map(function (c) { return [c[1], c[0]]; });
+        var world = [[-85, -180], [-85, 180], [85, 180], [85, -180]];
+        L.polygon([world, ring], {
+            stroke: false, fillColor: '#f4f1ea', fillOpacity: 1, interactive: false
+        }).addTo(map);
+        L.geoJSON(json__boundary, {
+            style: { color: '#c9a227', weight: 3, fill: false }, interactive: false
+        }).addTo(map);
+
+        // Туристически маршрути (данни: data/_3.js, генерирани от GPX с tools/gpx_to_js.py)
+        var trailColors = ['#e63946', '#1d7874', '#7b2cbf', '#f77f00', '#2a6fdb', '#6a994e', '#d62828', '#8338ec'];
+        var trailLayers = {};
+        var layerTrails = L.geoJSON(json__3, {
+            style: function (feature) {
+                return { color: trailColors[json__3.features.indexOf(feature) % trailColors.length], weight: 4, opacity: 0.9 };
+            },
+            onEachFeature: function (feature, layer) {
+                var p = feature.properties || {};
+                var html = '<div class="popup-title">' + (p['Име'] || 'Маршрут') + '</div>';
+                if (p['Дължина_км']) html += '<div class="popup-row"><span class="popup-label">Дължина:</span> ' + p['Дължина_км'] + ' км</div>';
+                if (p['Източник']) html += '<div class="popup-row"><span class="popup-label">Източник:</span> ' + p['Източник'] + '</div>';
+                layer.bindPopup(html);
+                trailLayers[json__3.features.indexOf(feature)] = layer;
+                layer.on('mouseover', function () { layer.setStyle({ weight: 7 }); });
+                layer.on('mouseout', function () { layerTrails.resetStyle(layer); });
+            }
+        }).addTo(map);
+
+        map.fitBounds(varnaBounds);
+
+        // Връзки от другите страници: karta.html?o=c-8 (обект) или ?t=0 (маршрут)
+        (function () {
+            var m = /[?&]o=([^&]+)/.exec(location.search), t = /[?&]t=(\d+)/.exec(location.search);
+            if (m && registry[decodeURIComponent(m[1])]) {
+                var l = registry[decodeURIComponent(m[1])];
+                map.setView(l.getLatLng(), 15); l.openPopup();
+            } else if (t && trailLayers[+t[1]]) {
+                map.fitBounds(trailLayers[+t[1]].getBounds().pad(0.2)); trailLayers[+t[1]].openPopup();
+            }
+        })();
+
+        // Layer control
+        var baseMaps = {
+            "Светла (CARTO)": carto,
+            "OpenStreetMap": osm,
+            "Улици (Esri)": esri,
+            "Сателит (Esri)": sat,
+            "Топографска карта": topo
+        };
+        var overlayMaps = {
+            "🏛️ Културно-исторически обекти": layerCultural,
+            "🌿 Природни обекти": layerNatural,
+            "🥾 Туристически маршрути": layerTrails
+        };
+        L.control.layers(baseMaps, overlayMaps, { collapsed: false, position: 'topright' }).addTo(map);
+
+        // Legend
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            var div = L.DomUtil.create('div', 'legend');
+            div.innerHTML =
+                '<div class="legend-title">Легенда</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#6B3FA0">🏛️</div> Музей</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#4A5568">🏰</div> Крепост</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#2B6CB0">⛪</div> Църква / катедрала</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#2C5282">🕍</div> Манастир / параклис</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#744210">⛰️</div> Мегалит / скален обект</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#8B4513">🏛️</div> Други културни</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#38A169">🌳</div> Парк / гора</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#2B6CB0">💧</div> Водопад</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#D69E2E">🏖️</div> Плаж</div>' +
+                '<div class="legend-item"><div class="legend-icon" style="background:#276749">🍃</div> Други природни</div>' +
+                '<div class="legend-item"><div style="width:28px;height:0;border-top:4px solid #e63946;flex-shrink:0"></div> Туристически маршрут</div>';
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+</body>
+</html>
