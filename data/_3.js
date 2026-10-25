@@ -1,0 +1,1 @@
+var json__3 = {"type": "FeatureCollection", "name": "Туристически маршрути", "features": []};

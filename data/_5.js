@@ -1,0 +1,1 @@
+var json__5 = {"type":"FeatureCollection","name":"_5","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[{"type":"Feature","properties":{"id":"1","Столи":"Константинопол"},"geometry":{"type":"Point","coordinates":[28.978115123984875,41.046767477195708]}}]}
