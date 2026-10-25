@@ -1,0 +1,121 @@
+:root{
+  --navy:#0b3c5d; --navy-d:#082b43; --teal:#1d7874; --gold:#c9a227; --gold-d:#a8851a;
+  --sand:#f4f1ea; --ink:#1a1a2e; --muted:#5b6472; --card:#fff; --line:#e3ddcf;
+  --radius:12px; --shadow:0 4px 18px rgba(11,60,93,.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--sand);line-height:1.6}
+a{color:var(--teal)}
+img,svg{max-width:100%}
+h1,h2,h3{line-height:1.25;color:var(--navy)}
+.container{width:min(1120px,100% - 32px);margin-inline:auto}
+
+/* ---------- Навигационна система ---------- */
+.site-header{position:sticky;top:0;z-index:2000;background:var(--navy);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.site-header .bar{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:60px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700;font-size:18px;letter-spacing:.2px}
+.logo .mark{width:34px;height:34px;border-radius:50%;background:var(--gold);display:grid;place-items:center;font-size:18px}
+.logo small{display:block;font-weight:400;font-size:11px;opacity:.8;letter-spacing:.5px}
+.nav{display:flex;gap:4px;list-style:none;margin:0;padding:0}
+.nav a{display:block;padding:8px 14px;border-radius:8px;color:#dce8f1;text-decoration:none;font-weight:600;font-size:15px}
+.nav a:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav a.active{background:var(--gold);color:var(--navy-d)}
+.nav-toggle{display:none;background:transparent;border:2px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;font-size:20px;padding:4px 10px;cursor:pointer}
+@media(max-width:760px){
+  .nav-toggle{display:block}
+  .nav{display:none;position:absolute;left:0;right:0;top:100%;background:var(--navy);flex-direction:column;padding:8px 16px 14px}
+  .nav.open{display:flex}
+}
+.breadcrumb{font-size:14px;color:var(--muted);padding:14px 0 0}
+.breadcrumb a{color:var(--teal);text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+
+/* ---------- Бутони ---------- */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;border:2px solid transparent;font:600 15px/1 inherit;font-family:inherit;text-decoration:none;cursor:pointer;transition:transform .12s,background .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.18)}
+.btn-primary{background:var(--gold);color:var(--navy-d)}
+.btn-primary:hover{background:#d8b232}
+.btn-outline{background:transparent;border-color:#fff;color:#fff}
+.btn-outline:hover{background:rgba(255,255,255,.15)}
+.btn-dark{background:var(--navy);color:#fff}
+.btn-dark:hover{background:var(--teal)}
+.btn-sm{padding:8px 14px;font-size:13px}
+.btn-row{display:flex;flex-wrap:wrap;gap:12px}
+
+/* ---------- Банер ---------- */
+.banner{position:relative;color:#fff;overflow:hidden;background:linear-gradient(180deg,#0b3c5d 0%,#1d7874 62%,#e8c872 100%)}
+.banner .inner{position:relative;z-index:2;padding:72px 0 150px}
+.banner h1{color:#fff;font-size:clamp(30px,5vw,54px);margin:0 0 12px;text-shadow:0 2px 12px rgba(0,0,0,.3)}
+.banner p{max-width:560px;font-size:18px;margin:0 0 26px;opacity:.95}
+.banner .tag{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:4px 14px;font-size:13px;margin-bottom:16px}
+.banner svg.scene{position:absolute;inset:auto 0 0 0;width:100%;height:170px;z-index:1}
+.banner .sun{position:absolute;right:12%;top:40px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,#fff3b0,#f2c94c 60%,rgba(242,201,76,0) 72%);z-index:1}
+.page-banner{background:linear-gradient(120deg,var(--navy),var(--teal));color:#fff}
+.page-banner .inner{padding:34px 0 30px}
+.page-banner h1{color:#fff;margin:0 0 6px;font-size:clamp(26px,4vw,38px)}
+.page-banner p{margin:0;opacity:.9;max-width:680px}
+
+/* ---------- Секции и карти ---------- */
+section.block{padding:44px 0}
+.section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.section-title h2{margin:0;font-size:28px;position:relative;padding-bottom:8px}
+.section-title h2::after{content:"";position:absolute;left:0;bottom:0;width:56px;height:4px;border-radius:2px;background:var(--gold)}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line)}
+.card h3{margin:0;font-size:18px}
+.card p{margin:0;color:var(--muted);font-size:14.5px}
+.card .spacer{flex:1}
+.feature .ico{width:54px;height:54px;border-radius:14px;background:var(--navy);display:grid;place-items:center;font-size:28px}
+.stats{background:var(--navy);color:#fff}
+.stats .grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));text-align:center;padding:26px 0}
+.stat b{display:block;font-size:40px;color:var(--gold);line-height:1.1}
+.stat span{opacity:.9;font-size:14px}
+.cta{background:linear-gradient(120deg,var(--teal),var(--navy));color:#fff;border-radius:var(--radius);padding:32px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.cta h2{color:#fff;margin:0 0 6px}
+.cta p{margin:0;opacity:.9}
+.chip{display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#f0e6d2;color:#5c4a1f}
+.chip.nature{background:#d4edda;color:#155724}
+.chip.trail{background:#d2f0ee;color:#0f5552}
+.dot{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;flex-shrink:0;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif}
+.obj-head{display:flex;gap:12px;align-items:center}
+.obj-head h3{font-size:16px}
+.meta{font-size:13px;color:var(--muted)}
+
+/* ---------- Филтри ---------- */
+.filters{display:grid;gap:12px;grid-template-columns:2fr 1fr 1fr;background:#fff;padding:14px;border-radius:var(--radius);box-shadow:var(--shadow);margin:22px 0 10px;border:1px solid var(--line)}
+.filters input,.filters select{width:100%;padding:10px 12px;border:1px solid #cfc8b8;border-radius:8px;font:inherit;background:#fff}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 18px}
+.tab{padding:7px 16px;border-radius:999px;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 14px inherit;font-family:inherit;cursor:pointer}
+.tab.on{background:var(--navy);color:#fff}
+@media(max-width:700px){.filters{grid-template-columns:1fr}}
+.empty{padding:30px;text-align:center;color:var(--muted);background:#fff;border-radius:var(--radius);border:1px dashed #cfc8b8}
+.notice{background:#fff8e1;border-left:5px solid var(--gold);padding:14px 18px;border-radius:8px;margin:18px 0}
+.notice.warn{background:#fdecea;border-color:#d64545}
+
+/* ---------- Форма ---------- */
+form.contact{display:grid;gap:12px;max-width:560px}
+form.contact label{font-weight:600;font-size:14px}
+form.contact input,form.contact textarea{width:100%;padding:10px 12px;border:1px solid #cfc8b8;border-radius:8px;font:inherit}
+table.simple{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+table.simple th{background:var(--navy);color:#fff;text-align:left;padding:10px 14px}
+table.simple td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+
+/* ---------- Подвал ---------- */
+.site-footer{background:var(--navy-d);color:#c9d6e2;margin-top:30px}
+.site-footer .cols{display:grid;gap:24px;grid-template-columns:2fr 1fr 1fr;padding:34px 0}
+.site-footer h4{color:#fff;margin:0 0 10px}
+.site-footer a{color:#e8c872;text-decoration:none;display:block;padding:2px 0}
+.site-footer a:hover{text-decoration:underline}
+.site-footer .copy{border-top:1px solid rgba(255,255,255,.15);padding:14px 0;font-size:13px}
+@media(max-width:700px){.site-footer .cols{grid-template-columns:1fr}}
+
+/* ---------- Страница с карта ---------- */
+body.map-page{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body.map-page #map{flex:1;min-height:0;width:100%}
+body.map-page .site-header{position:relative}
+/* qgis2web.css задава цвят на всички <a> с !important – връщаме цветовете на менюто */
+.site-header .logo{color:#fff !important}
+.site-header .nav a{color:#dce8f1 !important}
+.site-header .nav a:hover{color:#fff !important}
+.site-header .nav a.active{color:#082b43 !important}
