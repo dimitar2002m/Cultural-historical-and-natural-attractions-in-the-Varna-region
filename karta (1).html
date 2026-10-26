@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="css/leaflet.css">
+    <link rel="stylesheet" href="css/qgis2web.css">
+    <link rel="stylesheet" href="css/site.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer"><link rel="stylesheet" href="css/fa-solid.css">
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; }
+        html, body { height: 100%; }
+        #map { width: 100%; }
+        .map-title {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255,255,255,0.92);
+            padding: 8px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            pointer-events: none;
+            text-align: center;
+            max-width: 90%;
+        }
+        .leaflet-popup-content {
+            margin: 12px 14px;
+            min-width: 220px;
+            max-width: 320px;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .popup-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #c9a227;
+            padding-bottom: 6px;
+        }
+        .popup-row {
+            margin: 4px 0;
+        }
+        .popup-label {
+            font-weight: 600;
+            color: #555;
+            display: inline-block;
+            min-width: 72px;
+        }
+        .popup-type {
+            display: inline-block;
+            background: #f0e6d2;
+            color: #5c4a1f;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .popup-type.nature {
+            background: #d4edda;
+            color: #155724;
+        }
+        @media (max-width: 700px) { .legend { display: none; } }
+        .legend {
+            max-height: calc(100vh - 340px);
+            overflow-y: auto;
+            background: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .legend-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+        }
+        
+        .legend-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .legend-icon i {
+            font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+            font-weight: 900 !important;
+            font-style: normal;
+            color: #fff;
+        }
+        .marker-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+        .icon-pin {
+            width: 36px;
+            height: 36px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+            border: 2px solid #fff;
+            box-sizing: border-box;
+        }
+        .icon-pin i,
+        .icon-pin .fa-solid {
+            transform: rotate(45deg);
+            color: #fff !important;
+            font-size: 15px;
+            line-height: 1;
+            font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+            font-weight: 900 !important;
+            font-style: normal !important;
+            display: inline-block;
+            -webkit-font-smoothing: antialiased;
+        }
+
+    </style>
+    <title>Карта – Открий Варна</title>
+
+    <script>
+    // Ако Font Awesome не се зареди за ~1.2s, показваме emoji в маркерите
+    (function () {
+      function faOk() {
+        try {
+          var i = document.createElement('i');
+          i.className = 'fa-solid fa-anchor';
+          i.style.cssText = 'position:absolute;left:-9999px;font-family:"Font Awesome 6 Free";font-weight:900';
+          document.body.appendChild(i);
+          var w = i.offsetWidth;
+          document.body.removeChild(i);
+          return w > 0;
+        } catch (e) { return false; }
+      }
+      function check() {
+        if (!faOk()) document.documentElement.classList.add('no-fa');
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(check, 400); });
+      else setTimeout(check, 400);
+    })();
+    </script>
+
+</head>
+<body class="map-page">
+<header class="site-header"><div class="container bar"><a class="logo" href="index.html"><span class="mark"><i class="fa-solid fa-anchor"></i></span><span>Открий Варна<small>КАРТА · ОБЕКТИ · МАРШРУТИ</small></span></a><button class="nav-toggle" aria-label="Меню" aria-expanded="false"><i class="fa-solid fa-bars"></i></button><nav aria-label="Основна навигация"><ul class="nav"><li><a href="index.html">Начало</a></li><li><a href="karta.html" class="active" aria-current="page">Карта</a></li><li><a href="obekti.html">Обекти</a></li><li><a href="marshruti.html">Маршрути</a></li><li><a href="za-proekta.html">За проекта</a></li></ul></nav></div></header>
+    <div id="map-wrap" style="position:relative;height:100%;width:100%;">
+    <div id="map-loading" style="position:absolute;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:#e8eef2;color:#334;font:15px/1.4 system-ui,sans-serif;">
+      Зареждане на картата…
+    </div>
+    <div id="map"></div>
+  </div>
+    <script src="js/config.js"></script>
+    <script src="js/qgis2web_expressions.js"></script>
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet-hash.js"></script>
+    <script src="js/Autolinker.min.js"></script>
+    <script src="data/kulturni.js"></script>
+    <script src="data/prirodni.js"></script>
+    <script src="data/marshruti.js"></script>
+    <script src="data/granitsa.js"></script>
+    <script src="js/site.js"></script>
+    <script>
+        var varnaBounds = L.geoJSON(json__boundary).getBounds();
+        var map = L.map('map', {
+            zoomControl: false,
+            maxZoom: 18,
+            minZoom: 8,
+            zoomSnap: 0.25,
+            maxBounds: varnaBounds.pad(0.2),
+            maxBoundsViscosity: 0.8,
+            preferCanvas: true
+        });
+
+        // Веднага центрираме Варна – иначе екранът е празен до края на скрипта
+        map.fitBounds(varnaBounds);
+
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+
+        map.attributionControl.setPrefix(
+            '<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> · ' +
+            '<a href="https://leafletjs.com">Leaflet</a> · <a href="https://qgis.org">QGIS</a>'
+        );
+
+        var autolinker = new Autolinker({ truncate: { length: 40, location: 'smart' } });
+
+        // ========== Фонови карти (базови слоеве) ==========
+        // Esri е най-стабилният безплатен слой – винаги работи.
+        // OSM понякога блокира заявки; затова има огледала + Esri.
+        var osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>';
+
+        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: osmAttr,
+            maxZoom: 19,
+            crossOrigin: true
+        });
+
+        // Алтернативни OSM плочки (ако основният сървър не отговаря)
+        var osmHot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            attribution: osmAttr + ', HOT',
+            maxZoom: 19,
+            subdomains: 'abc'
+        });
+
+        var esriStreet = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+            { attribution: 'Tiles &copy; Esri', maxZoom: 19 }
+        );
+
+        var esriSat = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            { attribution: 'Tiles &copy; Esri', maxZoom: 19 }
+        );
+
+        var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenTopoMap (CC-BY-SA)',
+            maxZoom: 17,
+            subdomains: 'abc'
+        });
+
+        // CARTO – само с ключ от js/config.js
+        var cartoKey = (window.MAP_CONFIG && MAP_CONFIG.cartoKey || '').trim();
+        var carto = cartoKey
+            ? L.tileLayer(
+                'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=' + encodeURIComponent(cartoKey),
+                {
+                    attribution: osmAttr + ', &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 20
+                }
+              )
+            : null;
+
+        // MapTiler – само с ключ
+        var apiBases = {};
+        var mtKey = (window.MAP_CONFIG && MAP_CONFIG.maptilerKey || '').trim();
+        if (mtKey) {
+            var mtAttr = '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> ' + osmAttr;
+            apiBases['Улици (MapTiler)'] = L.tileLayer(
+                'https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=' + mtKey,
+                { attribution: mtAttr, maxZoom: 20 }
+            );
+            apiBases['Сателит (MapTiler)'] = L.tileLayer(
+                'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=' + mtKey,
+                { attribution: mtAttr, maxZoom: 20 }
+            );
+        }
+
+        // Старт с Esri – бърз и стабилен (OSM често е бавен/блокиран → празен екран)
+        esriStreet.addTo(map);
+        esriStreet.once('load', function () {
+            var el = document.getElementById('map-loading');
+            if (el) el.style.display = 'none';
+        });
+        // ако плочките вече са в кеш или load не се задейства
+        setTimeout(function () {
+            var el = document.getElementById('map-loading');
+            if (el) el.style.display = 'none';
+        }, 2500);
+
+        // По-бързо презареждане на плочки при местене
+        esriStreet.options.updateWhenIdle = false;
+        esriStreet.options.keepBuffer = 2;
+
+        // Icon helper – pin style with Font Awesome
+        // Иконките и цветовете идват от js/site.js (Varna.categories) – общи за сайта и картата
+        function makeIcon(faClass, color) {
+            return L.divIcon({
+                className: 'marker-icon',
+                html: '<div class="icon-pin" style="background:' + color + '">' +
+                      '<i class="fa-solid ' + faClass + '" aria-hidden="true"></i></div>',
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -32]
+            });
+        }
+        function iconFor(props, kind) {
+            var c = Varna.category(props, kind);
+            return makeIcon(c.icon, c.color);
+        }
+
+        function popupContent(feature, isNature) {
+            var p = feature.properties;
+            var typeClass = isNature ? 'popup-type nature' : 'popup-type';
+            var html = '<div class="popup-title">' + (p['Име'] || '') + '</div>';
+            if (p['Тип']) {
+                html += '<div class="popup-row"><span class="' + typeClass + '">' + p['Тип'] + '</span></div>';
+            }
+            if (p['Община']) {
+                html += '<div class="popup-row"><span class="popup-label">Община:</span> ' + p['Община'] + '</div>';
+            }
+            if (p['Описание']) {
+                html += '<div class="popup-row" style="margin-top:8px;color:#333;">' + p['Описание'] + '</div>';
+            }
+            return html;
+        }
+
+        var registry = {};
+        // Cultural layer
+        var layerCultural = L.geoJSON(json__1, {
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, { icon: iconFor(feature.properties, 'c') });
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(popupContent(feature, false), { maxWidth: 340 });
+                registry['c-' + feature.properties.id] = layer;
+            }
+        });
+
+        // Natural layer
+        var layerNatural = L.geoJSON(json__2, {
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, { icon: iconFor(feature.properties, 'n') });
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(popupContent(feature, true), { maxWidth: 340 });
+                registry['n-' + feature.properties.id] = layer;
+            }
+        });
+
+        layerCultural.addTo(map);
+        layerNatural.addTo(map);
+
+        // Граница на област Варна: затъмняване на всичко извън нея
+        var ring = json__boundary.geometry.coordinates[0].map(function (c) { return [c[1], c[0]]; });
+        var world = [[-85, -180], [-85, 180], [85, 180], [85, -180]];
+        L.polygon([world, ring], {
+            stroke: false, fillColor: '#f4f1ea', fillOpacity: 1, interactive: false
+        }).addTo(map);
+        L.geoJSON(json__boundary, {
+            style: { color: '#c9a227', weight: 3, fill: false }, interactive: false
+        }).addTo(map);
+
+        // Туристически маршрути (данни: data/marshruti.js, генерирани от GPX с tools/gpx_to_js.js)
+        // Цветове по подразбиране + приоритет на properties.Цвят (от маркировката)
+        var trailColors = ['#e63946', '#1d7874', '#7b2cbf', '#f77f00', '#2a6fdb', '#6a994e', '#c2185b', '#8d6e63', '#00838f', '#ef6c00'];
+        var trailLayers = {};
+        var layerTrails = L.geoJSON(json__3, {
+            style: function (feature) {
+                var p = feature.properties || {};
+                var c = p['Цвят'] || trailColors[json__3.features.indexOf(feature) % trailColors.length];
+                return { color: c, weight: 4, opacity: 0.9 };
+            },
+            onEachFeature: function (feature, layer) {
+                var p = feature.properties || {};
+                var html = '<div class="popup-title">' + (p['Име'] || 'Маршрут') + '</div>';
+                if (p['Маркировка']) html += '<div class="popup-row"><span class="popup-label">Маркировка:</span> ' + p['Маркировка'] + '</div>';
+                if (p['Дължина_км']) html += '<div class="popup-row"><span class="popup-label">Дължина:</span> ' + p['Дължина_км'] + ' км</div>';
+                if (p['Източник']) html += '<div class="popup-row"><span class="popup-label">Източник:</span> ' + p['Източник'] + '</div>';
+                layer.bindPopup(html);
+                trailLayers[json__3.features.indexOf(feature)] = layer;
+                layer.on('mouseover', function () { layer.setStyle({ weight: 7 }); });
+                layer.on('mouseout', function () { layerTrails.resetStyle(layer); });
+            }
+        }).addTo(map);
+
+        // Поправка на размера след зареждане на панелите
+        setTimeout(function () { map.invalidateSize(); }, 100);
+
+        // Връзки от другите страници: karta.html?o=c-8 (обект) или ?t=0 (маршрут)
+        (function () {
+            var m = /[?&]o=([^&]+)/.exec(location.search), t = /[?&]t=(\d+)/.exec(location.search);
+            if (m && registry[decodeURIComponent(m[1])]) {
+                var l = registry[decodeURIComponent(m[1])];
+                map.setView(l.getLatLng(), 15); l.openPopup();
+            } else if (t && trailLayers[+t[1]]) {
+                map.fitBounds(trailLayers[+t[1]].getBounds().pad(0.2)); trailLayers[+t[1]].openPopup();
+            }
+        })();
+
+        // Layer control
+        var baseMaps = {
+            "OpenStreetMap": osm,
+            "OpenStreetMap HOT": osmHot,
+            "Улици (Esri)": esriStreet,
+            "Сателит (Esri)": esriSat,
+            "Топографска карта": topo
+        };
+        if (carto) baseMaps["Светла (CARTO)"] = carto;
+        Object.keys(apiBases).forEach(function (k) { baseMaps[k] = apiBases[k]; });
+        var overlayMaps = {
+            '<i class="fa-solid fa-landmark"></i> Културно-исторически обекти': layerCultural,
+            '<i class="fa-solid fa-leaf"></i> Природни обекти': layerNatural,
+            '<i class="fa-solid fa-person-hiking"></i> Туристически маршрути': layerTrails
+        };
+        L.control.layers(baseMaps, overlayMaps, { collapsed: false, position: 'topright' }).addTo(map);
+
+        // Legend
+        var legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            var div = L.DomUtil.create('div', 'legend');
+            var html = '<div class="legend-title">Легенда</div>';
+            Object.keys(Varna.categories).forEach(function (k) {
+                var c = Varna.categories[k];
+                html += '<div class="legend-item"><div class="legend-icon" style="background:' + c.color + '"><i class="fa-solid ' + c.icon + '"></i></div> ' + c.label + '</div>';
+            });
+            html += '<div class="legend-item"><div style="width:28px;height:0;border-top:4px solid #e63946;flex-shrink:0"></div> Туристически маршрут</div>';
+            div.innerHTML = html;
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+</body>
+</html>
