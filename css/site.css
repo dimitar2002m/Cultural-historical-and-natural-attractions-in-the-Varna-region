@@ -130,3 +130,41 @@ body.map-page .site-header{position:relative}
 .section-title h2 i{color:var(--gold);margin-right:6px}
 .card h3 i{color:var(--teal);margin-right:6px}
 .banner .tag i{margin-right:4px}
+
+/* Цветни точки с FA иконки (обекти / маршрути) */
+.dot {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+}
+.dot i.fa-solid {
+  color: #fff;
+  font-size: 13px;
+  width: 1em;
+  text-align: center;
+}
+
+.dot .dot-emoji { display: none; }
+.no-fa .dot i.fa-solid { display: none; }
+.no-fa .dot .dot-emoji { display: inline; }
+
+/* FORCE FA ICONS */
+.dot i.fa-solid,
+.mark i.fa-solid,
+.ico i.fa-solid,
+.btn i.fa-solid,
+.fa-solid {
+  font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+  -webkit-font-smoothing: antialiased;
+}
+.dot {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.dot i { color: #fff; font-size: 13px; }
