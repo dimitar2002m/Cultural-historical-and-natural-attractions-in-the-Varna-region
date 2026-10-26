@@ -1,20 +1,20 @@
 /* Общ код за сайта: меню, категории (в синхрон с картата), списъци */
 (function () {
   var C = {
-    museum:{label:'Музеи',emoji:'🏛️',color:'#6B3FA0'},
-    fortress:{label:'Крепости',emoji:'🏰',color:'#4A5568'},
-    church:{label:'Църкви и катедрали',emoji:'⛪',color:'#2B6CB0'},
-    monastery:{label:'Манастири и параклиси',emoji:'🕍',color:'#2C5282'},
-    megalith:{label:'Скални обекти',emoji:'⛰️',color:'#744210'},
-    attraction:{label:'Атракции',emoji:'🐬',color:'#C05621'},
-    cultural:{label:'Други културни',emoji:'🏛️',color:'#8B4513'},
-    waterfall:{label:'Водопади',emoji:'💧',color:'#2B6CB0'},
-    park:{label:'Паркове и гори',emoji:'🌳',color:'#38A169'},
-    beach:{label:'Плажове',emoji:'🏖️',color:'#D69E2E'},
-    cave:{label:'Пещери',emoji:'🕳️',color:'#553C9A'},
-    viewpoint:{label:'Панорамни места',emoji:'🔭',color:'#DD6B20'},
-    trail:{label:'Екопътеки',emoji:'🥾',color:'#319795'},
-    nature:{label:'Други природни',emoji:'🍃',color:'#276749'}
+    museum:{label:'Музеи',icon:'fa-landmark',color:'#6B3FA0'},
+    fortress:{label:'Крепости',icon:'fa-chess-rook',color:'#4A5568'},
+    church:{label:'Църкви и катедрали',icon:'fa-church',color:'#2B6CB0'},
+    monastery:{label:'Манастири и параклиси',icon:'fa-place-of-worship',color:'#2C5282'},
+    megalith:{label:'Скални обекти',icon:'fa-mountain',color:'#744210'},
+    attraction:{label:'Атракции',icon:'fa-fish',color:'#C05621'},
+    cultural:{label:'Други културни',icon:'fa-building-columns',color:'#8B4513'},
+    waterfall:{label:'Водопади',icon:'fa-water',color:'#2B6CB0'},
+    park:{label:'Паркове и гори',icon:'fa-tree',color:'#38A169'},
+    beach:{label:'Плажове',icon:'fa-umbrella-beach',color:'#D69E2E'},
+    cave:{label:'Пещери',icon:'fa-dungeon',color:'#553C9A'},
+    viewpoint:{label:'Панорамни места',icon:'fa-binoculars',color:'#DD6B20'},
+    trail:{label:'Екопътеки',icon:'fa-person-hiking',color:'#319795'},
+    nature:{label:'Други природни',icon:'fa-leaf',color:'#276749'}
   };
   function has(t, a) { return a.some(function (s) { return t.indexOf(s) >= 0; }); }
   function category(p, kind) {
@@ -55,7 +55,7 @@
       '<div><h3>' + esc(o.p['Име']) + '</h3><div class="meta">' + esc(o.p['Община'] || '') + '</div></div></div>' +
       '<div><span class="chip ' + (o.kind === 'n' ? 'nature' : '') + '">' + esc(o.p['Тип']) + '</span></div>' +
       '<p>' + esc(d) + '</p><div class="spacer"></div>' +
-      '<a class="btn btn-dark btn-sm" href="karta.html?o=' + o.key + '">📍 Покажи на картата</a></article>';
+      '<a class="btn btn-dark btn-sm" href="karta.html?o=' + o.key + '"><i class="fa-solid fa-location-dot"></i> Покажи на картата</a></article>';
   }
   window.Varna = { categories: C, category: category, allObjects: allObjects, esc: esc, objCard: objCard };
 
@@ -120,10 +120,10 @@
         var meta = [];
         if (p['Маркировка']) meta.push(p['Маркировка']);
         if (p['Дължина_км']) meta.push(p['Дължина_км'] + ' км');
-        return '<article class="card"><div class="obj-head"><div class="dot" style="background:' + color + '">🥾</div><div><h3>' + esc(p['Име']) +
+        return '<article class="card"><div class="obj-head"><div class="dot" style="background:' + color + '"><i class="fa-solid fa-person-hiking"></i></div><div><h3>' + esc(p['Име']) +
           '</h3><div class="meta">' + meta.join(' · ') + '</div></div></div>' +
           '<div><span class="chip trail">Туристически маршрут</span></div><div class="spacer"></div>' +
-          '<a class="btn btn-dark btn-sm" href="karta.html?t=' + i + '">📍 Покажи на картата</a></article>';
+          '<a class="btn btn-dark btn-sm" href="karta.html?t=' + i + '"><i class="fa-solid fa-location-dot"></i> Покажи на картата</a></article>';
       }).join('');
       var ph = document.getElementById('trail-empty'); if (ph) ph.style.display = 'none';
     }
