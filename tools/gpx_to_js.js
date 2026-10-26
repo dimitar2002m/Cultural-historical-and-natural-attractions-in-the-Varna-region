@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Събира всички .gpx файлове от папка gpx/ в data/_3.js (GeoJSON за картата).
+ * Събира всички маршрути (.gpx, .kml, .kmz) от папките routes/ и gpx/ в data/_3.js (GeoJSON за картата).
  *
  * Употреба (от главната папка на сайта):
  *   node tools/gpx_to_js.js
@@ -14,10 +14,11 @@
 'use strict';
 
 const fs = require('fs');
+const zlib = require('zlib');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const gpxDir = path.join(root, 'gpx');
+const routeDirs = [path.join(root, 'routes'), path.join(root, 'gpx')];
 const outFile = path.join(root, 'data', '_3.js');
 const boundaryFile = path.join(root, 'data', '_boundary.js');
 
@@ -135,6 +136,47 @@ function parseGpx(xmlText) {
   return { lines, title };
 }
 
+/** Чете първия .kml файл от .kmz (ZIP) само с вградения zlib */
+function readKmz(buf) {
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= 0; i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('не е валиден KMZ/ZIP');
+  const count = buf.readUInt16LE(eocd + 10);
+  let p = buf.readUInt32LE(eocd + 16);
+  for (let k = 0; k < count; k++) {
+    if (buf.readUInt32LE(p) !== 0x02014b50) break;
+    const method = buf.readUInt16LE(p + 10);
+    const csize = buf.readUInt32LE(p + 20);
+    const nlen = buf.readUInt16LE(p + 28);
+    const elen = buf.readUInt16LE(p + 30);
+    const clen = buf.readUInt16LE(p + 32);
+    const off = buf.readUInt32LE(p + 42);
+    const name = buf.toString('utf8', p + 46, p + 46 + nlen);
+    if (name.toLowerCase().endsWith('.kml')) {
+      const start = off + 30 + buf.readUInt16LE(off + 26) + buf.readUInt16LE(off + 28);
+      const data = buf.subarray(start, start + csize);
+      return (method === 8 ? zlib.inflateRawSync(data) : data).toString('utf8');
+    }
+    p += 46 + nlen + elen + clen;
+  }
+  throw new Error('в KMZ няма .kml файл');
+}
+
+/** KML: всички <LineString><coordinates> (lon,lat[,alt]) */
+function parseKml(xmlText) {
+  const lines = [];
+  const re = /<LineString>[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/gi;
+  let m;
+  while ((m = re.exec(xmlText))) {
+    const pts = m[1].trim().split(/\s+/).map((t) => t.split(',').map(parseFloat))
+      .filter((c) => c.length >= 2 && isFinite(c[0]) && isFinite(c[1]));
+    if (pts.length > 1) lines.push(simplify(pts.map(([x, y]) => [+x.toFixed(5), +y.toFixed(5)])));
+  }
+  return { lines, title: null };
+}
+
 function detectMarking(filename, title) {
   const text = ((filename || '') + ' ' + (title || '')).toLowerCase();
   for (const [key, color] of Object.entries(MARKING_COLORS)) {
@@ -154,27 +196,37 @@ function detectMarking(filename, title) {
 }
 
 function main() {
-  if (!fs.existsSync(gpxDir)) {
-    console.error('Няма папка gpx/. Създай я и сложи .gpx файлове.');
-    process.exit(1);
-  }
 
   const ring = loadBoundaryRing();
-  const files = fs
-    .readdirSync(gpxDir)
-    .filter((f) => f.toLowerCase().endsWith('.gpx'))
-    .sort();
+  const files = [];
+  for (const dir of routeDirs) {
+    if (!fs.existsSync(dir)) continue;
+    fs.readdirSync(dir)
+      .filter((f) => /\.(gpx|kml|kmz)$/i.test(f))
+      .sort((a, b) => a.localeCompare(b, 'bg'))
+      .forEach((f) => files.push(path.join(dir, f)));
+  }
 
   if (!files.length) {
-    console.log('Няма .gpx файлове в gpx/. Записвам празна колекция.');
+    console.log('Няма .gpx/.kml/.kmz файлове в routes/ или gpx/. Записвам празна колекция.');
   }
+  const seen = new Set();
 
   const feats = [];
 
-  for (const file of files) {
-    const full = path.join(gpxDir, file);
-    const xml = fs.readFileSync(full, 'utf8');
-    const { lines, title: gpxTitle } = parseGpx(xml);
+  for (const full of files) {
+    const file = path.basename(full);
+    const ext = path.extname(file).toLowerCase();
+    let parsed;
+    try {
+      if (ext === '.kmz') parsed = parseKml(readKmz(fs.readFileSync(full)));
+      else if (ext === '.kml') parsed = parseKml(fs.readFileSync(full, 'utf8'));
+      else parsed = parseGpx(fs.readFileSync(full, 'utf8'));
+    } catch (e) {
+      console.log('грешка при четене:', file, '-', e.message);
+      continue;
+    }
+    const { lines, title: gpxTitle } = parsed;
 
     if (!lines.length) {
       console.log('пропуснат (няма линии):', file);
@@ -189,8 +241,16 @@ function main() {
       continue;
     }
 
+    // еднакви трасета (напр. копие „… (1).kmz“) се добавят само веднъж
+    const sig = JSON.stringify(lines);
+    if (seen.has(sig)) {
+      console.log('дубликат, пропуснат:', file);
+      continue;
+    }
+    seen.add(sig);
+
     const baseName = path.basename(file, path.extname(file));
-    const title = gpxTitle || baseName.replace(/[_-]+/g, ' ').trim();
+    const title = gpxTitle || baseName.replace(/\(\d+\)\s*$/, '').replace(/[_]+/g, ' ').replace(/\s+-\s+/g, ' – ').trim();
     const marking = detectMarking(baseName, title);
 
     let lengthKm = 0;
@@ -203,7 +263,7 @@ function main() {
     const props = {
       Име: title,
       Дължина_км: Math.round(lengthKm * 10) / 10,
-      Източник: 'GPX'
+      Източник: ext === '.gpx' ? 'GPX' : 'varnamaps.eu'
     };
     if (marking.label) {
       props.Маркировка = marking.label;
