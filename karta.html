@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="css/leaflet.css">
     <link rel="stylesheet" href="css/qgis2web.css">
-    <link rel="stylesheet" href="css/site.css"><link rel="stylesheet" href="css/fontawesome.min.css">
+    <link rel="stylesheet" href="css/site.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer"><link rel="stylesheet" href="css/fa-solid.css">
     <style>
         html, body { margin: 0; padding: 0; width: 100%; }
         html, body { height: 100%; }
@@ -89,6 +89,7 @@
             gap: 8px;
             margin: 4px 0;
         }
+        
         .legend-icon {
             width: 28px;
             height: 28px;
@@ -96,9 +97,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #fff;
             font-size: 13px;
             flex-shrink: 0;
+        }
+        .legend-icon i {
+            font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+            font-weight: 900 !important;
+            font-style: normal;
+            color: #fff;
         }
         .marker-icon {
             background: transparent !important;
@@ -114,14 +121,46 @@
             justify-content: center;
             box-shadow: 0 2px 6px rgba(0,0,0,0.35);
             border: 2px solid #fff;
+            box-sizing: border-box;
         }
-        .icon-pin i {
+        .icon-pin i,
+        .icon-pin .fa-solid {
             transform: rotate(45deg);
-            color: #fff;
-            font-size: 14px;
+            color: #fff !important;
+            font-size: 15px;
+            line-height: 1;
+            font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+            font-weight: 900 !important;
+            font-style: normal !important;
+            display: inline-block;
+            -webkit-font-smoothing: antialiased;
         }
+
     </style>
     <title>Карта – Открий Варна</title>
+
+    <script>
+    // Ако Font Awesome не се зареди за ~1.2s, показваме emoji в маркерите
+    (function () {
+      function faOk() {
+        try {
+          var i = document.createElement('i');
+          i.className = 'fa-solid fa-anchor';
+          i.style.cssText = 'position:absolute;left:-9999px;font-family:"Font Awesome 6 Free";font-weight:900';
+          document.body.appendChild(i);
+          var w = i.offsetWidth;
+          document.body.removeChild(i);
+          return w > 0;
+        } catch (e) { return false; }
+      }
+      function check() {
+        if (!faOk()) document.documentElement.classList.add('no-fa');
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(check, 400); });
+      else setTimeout(check, 400);
+    })();
+    </script>
+
 </head>
 <body class="map-page">
 <header class="site-header"><div class="container bar"><a class="logo" href="index.html"><span class="mark"><i class="fa-solid fa-anchor"></i></span><span>Открий Варна<small>КАРТА · ОБЕКТИ · МАРШРУТИ</small></span></a><button class="nav-toggle" aria-label="Меню" aria-expanded="false"><i class="fa-solid fa-bars"></i></button><nav aria-label="Основна навигация"><ul class="nav"><li><a href="index.html">Начало</a></li><li><a href="karta.html" class="active" aria-current="page">Карта</a></li><li><a href="obekti.html">Обекти</a></li><li><a href="marshruti.html">Маршрути</a></li><li><a href="za-proekta.html">За проекта</a></li></ul></nav></div></header>
@@ -208,13 +247,14 @@
         function makeIcon(faClass, color) {
             return L.divIcon({
                 className: 'marker-icon',
-                html: '<div class="icon-pin" style="background:' + color + '"><i class="fa-solid ' + faClass + '"></i></div>',
+                html: '<div class="icon-pin" style="background:' + color + '">' +
+                      '<i class="fa-solid ' + faClass + '" aria-hidden="true"></i></div>',
                 iconSize: [36, 36],
                 iconAnchor: [18, 36],
                 popupAnchor: [0, -32]
             });
         }
-        function iconFor(props, kind) {
+        function iconForfunction iconFor(props, kind) {
             var c = Varna.category(props, kind);
             return makeIcon(c.icon, c.color);
         }
