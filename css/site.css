@@ -119,3 +119,14 @@ body.map-page .site-header{position:relative}
 .site-header .nav a{color:#dce8f1 !important}
 .site-header .nav a:hover{color:#fff !important}
 .site-header .nav a.active{color:#082b43 !important}
+/* Font Awesome икони */
+.dot{color:#fff}
+.dot i,.feature .ico i{font-size:20px}
+.feature .ico{color:var(--gold)}
+.feature .ico i{font-size:26px}
+.logo .mark{color:var(--navy-d);font-size:16px}
+.btn i,.tab i,.chip i{font-size:.95em}
+.page-banner h1 i{margin-right:6px;color:var(--gold)}
+.section-title h2 i{color:var(--gold);margin-right:6px}
+.card h3 i{color:var(--teal);margin-right:6px}
+.banner .tag i{margin-right:4px}
