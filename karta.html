@@ -297,16 +297,20 @@
             style: { color: '#c9a227', weight: 3, fill: false }, interactive: false
         }).addTo(map);
 
-        // Туристически маршрути (данни: data/_3.js, генерирани от GPX с tools/gpx_to_js.py)
+        // Туристически маршрути (данни: data/_3.js, генерирани от GPX с tools/gpx_to_js.js)
+        // Цветове по подразбиране + приоритет на properties.Цвят (от маркировката)
         var trailColors = ['#e63946', '#1d7874', '#7b2cbf', '#f77f00', '#2a6fdb', '#6a994e', '#d62828', '#8338ec'];
         var trailLayers = {};
         var layerTrails = L.geoJSON(json__3, {
             style: function (feature) {
-                return { color: trailColors[json__3.features.indexOf(feature) % trailColors.length], weight: 4, opacity: 0.9 };
+                var p = feature.properties || {};
+                var c = p['Цвят'] || trailColors[json__3.features.indexOf(feature) % trailColors.length];
+                return { color: c, weight: 4, opacity: 0.9 };
             },
             onEachFeature: function (feature, layer) {
                 var p = feature.properties || {};
                 var html = '<div class="popup-title">' + (p['Име'] || 'Маршрут') + '</div>';
+                if (p['Маркировка']) html += '<div class="popup-row"><span class="popup-label">Маркировка:</span> ' + p['Маркировка'] + '</div>';
                 if (p['Дължина_км']) html += '<div class="popup-row"><span class="popup-label">Дължина:</span> ' + p['Дължина_км'] + ' км</div>';
                 if (p['Източник']) html += '<div class="popup-row"><span class="popup-label">Източник:</span> ' + p['Източник'] + '</div>';
                 layer.bindPopup(html);
