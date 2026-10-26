@@ -115,9 +115,13 @@
     var tl = document.getElementById('trail-list');
     if (tl && window.json__3 && json__3.features.length) {
       tl.innerHTML = json__3.features.map(function (f, i) {
-        var p = f.properties;
-        return '<article class="card"><div class="obj-head"><div class="dot" style="background:#319795">🥾</div><div><h3>' + esc(p['Име']) +
-          '</h3><div class="meta">' + (p['Дължина_км'] ? p['Дължина_км'] + ' км' : '') + '</div></div></div>' +
+        var p = f.properties || {};
+        var color = p['Цвят'] || '#319795';
+        var meta = [];
+        if (p['Маркировка']) meta.push(p['Маркировка']);
+        if (p['Дължина_км']) meta.push(p['Дължина_км'] + ' км');
+        return '<article class="card"><div class="obj-head"><div class="dot" style="background:' + color + '">🥾</div><div><h3>' + esc(p['Име']) +
+          '</h3><div class="meta">' + meta.join(' · ') + '</div></div></div>' +
           '<div><span class="chip trail">Туристически маршрут</span></div><div class="spacer"></div>' +
           '<a class="btn btn-dark btn-sm" href="karta.html?t=' + i + '">📍 Покажи на картата</a></article>';
       }).join('');
