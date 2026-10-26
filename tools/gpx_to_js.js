@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Събира всички маршрути (.gpx, .kml, .kmz) от папките routes/ и gpx/ в data/_3.js (GeoJSON за картата).
+ * Събира всички маршрути (.gpx, .kml, .kmz) от папките routes/ и gpx/ в data/marshruti.js (GeoJSON за картата).
  *
  * Употреба (от главната папка на сайта):
  *   node tools/gpx_to_js.js
@@ -19,8 +19,8 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const routeDirs = [path.join(root, 'routes'), path.join(root, 'gpx')];
-const outFile = path.join(root, 'data', '_3.js');
-const boundaryFile = path.join(root, 'data', '_boundary.js');
+const outFile = path.join(root, 'data', 'marshruti.js');
+const boundaryFile = path.join(root, 'data', 'granitsa.js');
 
 // Цветове според лентовата маркировка на ТД „Родни балкани“
 const MARKING_COLORS = {
