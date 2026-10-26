@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="stylesheet" href="css/leaflet.css">
     <link rel="stylesheet" href="css/qgis2web.css">
-    <link rel="stylesheet" href="css/site.css">
+    <link rel="stylesheet" href="css/site.css"><link rel="stylesheet" href="css/fontawesome.min.css"><link rel="stylesheet" href="css/solid.min.css">
     <style>
         html, body { margin: 0; padding: 0; width: 100%; }
         html, body { height: 100%; }
@@ -69,6 +69,8 @@
         }
         @media (max-width: 700px) { .legend { display: none; } }
         .legend {
+            max-height: calc(100vh - 340px);
+            overflow-y: auto;
             background: white;
             padding: 10px 14px;
             border-radius: 8px;
@@ -87,7 +89,6 @@
             gap: 8px;
             margin: 4px 0;
         }
-        .legend-icon span, .icon-pin span { font-family: "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif; }
         .legend-icon {
             width: 28px;
             height: 28px;
@@ -114,30 +115,16 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.35);
             border: 2px solid #fff;
         }
-        .icon-pin span {
+        .icon-pin i {
             transform: rotate(45deg);
-            font-size: 16px;
-            line-height: 1;
+            color: #fff;
+            font-size: 14px;
         }
-        .icon-cultural { background: #8B4513; }
-        .icon-museum { background: #6B3FA0; }
-        .icon-fortress { background: #4A5568; }
-        .icon-church { background: #2B6CB0; }
-        .icon-monastery { background: #2C5282; }
-        .icon-megalith { background: #744210; }
-        .icon-attraction { background: #C05621; }
-        .icon-nature { background: #276749; }
-        .icon-waterfall { background: #2B6CB0; }
-        .icon-park { background: #38A169; }
-        .icon-beach { background: #D69E2E; }
-        .icon-cave { background: #553C9A; }
-        .icon-viewpoint { background: #DD6B20; }
-        .icon-trail { background: #319795; }
     </style>
     <title>Карта – Открий Варна</title>
 </head>
 <body class="map-page">
-<header class="site-header"><div class="container bar"><a class="logo" href="index.html"><span class="mark">⚓</span><span>Открий Варна<small>КАРТА · ОБЕКТИ · МАРШРУТИ</small></span></a><button class="nav-toggle" aria-label="Меню" aria-expanded="false">☰</button><nav aria-label="Основна навигация"><ul class="nav"><li><a href="index.html">Начало</a></li><li><a href="karta.html" class="active" aria-current="page">Карта</a></li><li><a href="obekti.html">Обекти</a></li><li><a href="marshruti.html">Маршрути</a></li><li><a href="za-proekta.html">За проекта</a></li></ul></nav></div></header>
+<header class="site-header"><div class="container bar"><a class="logo" href="index.html"><span class="mark"><i class="fa-solid fa-anchor"></i></span><span>Открий Варна<small>КАРТА · ОБЕКТИ · МАРШРУТИ</small></span></a><button class="nav-toggle" aria-label="Меню" aria-expanded="false"><i class="fa-solid fa-bars"></i></button><nav aria-label="Основна навигация"><ul class="nav"><li><a href="index.html">Начало</a></li><li><a href="karta.html" class="active" aria-current="page">Карта</a></li><li><a href="obekti.html">Обекти</a></li><li><a href="marshruti.html">Маршрути</a></li><li><a href="za-proekta.html">За проекта</a></li></ul></nav></div></header>
     <div id="map"></div>
     <script src="js/config.js"></script>
     <script src="js/qgis2web_expressions.js"></script>
@@ -148,6 +135,7 @@
     <script src="data/prirodni.js"></script>
     <script src="data/marshruti.js"></script>
     <script src="data/granitsa.js"></script>
+    <script src="js/site.js"></script>
     <script>
         var varnaBounds = L.geoJSON(json__boundary).getBounds();
         var map = L.map('map', {
@@ -177,11 +165,14 @@
             attribution: '© OpenTopoMap (CC-BY-SA)',
             maxZoom: 17
         });
-        var carto = L.tileLayer('er and the watermark goes away: https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_4d5v_1_516c00cbef879c487208e314', {
-            attribution: '© OpenStreetMap, © <a href="https://carto.com/attributions">CARTO</a>',
+        // CARTO вече изисква API ключ (https://www.carto.com/basemaps/apikey/). Ключът се слага в js/config.js (cartoKey).
+        // Без ключ плочките излизат с воден знак „API KEY REQUIRED“, затова слоят се включва само при въведен ключ.
+        var cartoKey = (window.MAP_CONFIG && MAP_CONFIG.cartoKey || '').trim();
+        var carto = cartoKey ? L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=' + encodeURIComponent(cartoKey), {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, © <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
-            maxZoom: 19
-        });
+            maxZoom: 20
+        }) : null;
         // OSM и CARTO често блокират заявки от файл (file://) без Referer. Тогава минаваме автоматично
         // към следващата фонова карта. Най-сигурно е картата да се отваря през http(s) (напр. GitHub Pages).
         // Фонове през API (MapTiler) – само ако е въведен ключ в js/config.js
@@ -193,7 +184,7 @@
             apiBases['Сателит (MapTiler)'] = L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=' + key, { attribution: mtAttr, maxZoom: 20 });
             apiBases['Терен (MapTiler)'] = L.tileLayer('https://api.maptiler.com/maps/outdoor-v2/256/{z}/{x}/{y}.png?key=' + key, { attribution: mtAttr, maxZoom: 20 });
         }
-        var free = location.protocol === 'file:' ? [topo, carto, osm] : [carto, osm, topo];
+        var free = (location.protocol === 'file:' ? [topo, carto, osm] : [carto, osm, topo]).filter(Boolean);
         var chain = (key ? [apiBases['Улици (MapTiler)']] : []).concat(free);
         var active = 0;
         function useBase(i) {
@@ -213,40 +204,19 @@
         chain[0].addTo(map);
 
         // Icon helper – pin style with Font Awesome
-        function makeIcon(emoji, colorClass) {
+        // Иконките и цветовете идват от js/site.js (Varna.categories) – общи за сайта и картата
+        function makeIcon(faClass, color) {
             return L.divIcon({
                 className: 'marker-icon',
-                html: '<div class="icon-pin ' + colorClass + '"><span>' + emoji + '</span></div>',
+                html: '<div class="icon-pin" style="background:' + color + '"><i class="fa-solid ' + faClass + '"></i></div>',
                 iconSize: [36, 36],
                 iconAnchor: [18, 36],
                 popupAnchor: [0, -32]
             });
         }
-
-        function iconForCultural(props) {
-            var t = (props['Тип'] || '').toLowerCase();
-            if (t.indexOf('музей') >= 0) return makeIcon('🏛️', 'icon-museum');
-            if (t.indexOf('крепост') >= 0) return makeIcon('🏰', 'icon-fortress');
-            if (t.indexOf('катедрал') >= 0 || t.indexOf('църква') >= 0) return makeIcon('⛪', 'icon-church');
-            if (t.indexOf('манастир') >= 0 || t.indexOf('параклис') >= 0) return makeIcon('🕍', 'icon-monastery');
-            if (t.indexOf('мегалит') >= 0 || t.indexOf('скален') >= 0) return makeIcon('⛰️', 'icon-megalith');
-            if (t.indexOf('атракция') >= 0 || t.indexOf('делфин') >= 0) return makeIcon('🐬', 'icon-attraction');
-            if (t.indexOf('резиденц') >= 0 || t.indexOf('дворец') >= 0) return makeIcon('🏛️', 'icon-cultural');
-            if (t.indexOf('терми') >= 0) return makeIcon('♨️', 'icon-cultural');
-            return makeIcon('📍', 'icon-cultural');
-        }
-
-        function iconForNatural(props) {
-            var t = (props['Тип'] || '').toLowerCase();
-            if (t.indexOf('водопад') >= 0) return makeIcon('💧', 'icon-waterfall');
-            if (t.indexOf('парк') >= 0 || t.indexOf('градина') >= 0 || t.indexOf('гора') >= 0 || t.indexOf('кория') >= 0)
-                return makeIcon('🌳', 'icon-park');
-            if (t.indexOf('плаж') >= 0) return makeIcon('🏖️', 'icon-beach');
-            if (t.indexOf('пещера') >= 0) return makeIcon('🕳️', 'icon-cave');
-            if (t.indexOf('панорам') >= 0 || t.indexOf('площадка') >= 0) return makeIcon('🔭', 'icon-viewpoint');
-            if (t.indexOf('екопътека') >= 0 || t.indexOf('пътека') >= 0) return makeIcon('🥾', 'icon-trail');
-            if (t.indexOf('защитен') >= 0 || t.indexOf('побити') >= 0) return makeIcon('⛰️', 'icon-nature');
-            return makeIcon('🍃', 'icon-nature');
+        function iconFor(props, kind) {
+            var c = Varna.category(props, kind);
+            return makeIcon(c.icon, c.color);
         }
 
         function popupContent(feature, isNature) {
@@ -269,7 +239,7 @@
         // Cultural layer
         var layerCultural = L.geoJSON(json__1, {
             pointToLayer: function (feature, latlng) {
-                return L.marker(latlng, { icon: iconForCultural(feature.properties) });
+                return L.marker(latlng, { icon: iconFor(feature.properties, 'c') });
             },
             onEachFeature: function (feature, layer) {
                 layer.bindPopup(popupContent(feature, false), { maxWidth: 340 });
@@ -280,7 +250,7 @@
         // Natural layer
         var layerNatural = L.geoJSON(json__2, {
             pointToLayer: function (feature, latlng) {
-                return L.marker(latlng, { icon: iconForNatural(feature.properties) });
+                return L.marker(latlng, { icon: iconFor(feature.properties, 'n') });
             },
             onEachFeature: function (feature, layer) {
                 layer.bindPopup(popupContent(feature, true), { maxWidth: 340 });
@@ -338,16 +308,15 @@
         })();
 
         // Layer control
-        var baseMaps = {
-            "Светла (CARTO)": carto,
-            "OpenStreetMap": osm,
-            "Топографска карта": topo
-        };
+        var baseMaps = {};
+        if (carto) baseMaps["Светла (CARTO)"] = carto;
+        baseMaps["OpenStreetMap"] = osm;
+        baseMaps["Топографска карта"] = topo;
         Object.keys(apiBases).forEach(function (k) { baseMaps[k] = apiBases[k]; });
         var overlayMaps = {
-            "🏛️ Културно-исторически обекти": layerCultural,
-            "🌿 Природни обекти": layerNatural,
-            "🥾 Туристически маршрути": layerTrails
+            '<i class="fa-solid fa-landmark"></i> Културно-исторически обекти': layerCultural,
+            '<i class="fa-solid fa-leaf"></i> Природни обекти': layerNatural,
+            '<i class="fa-solid fa-person-hiking"></i> Туристически маршрути': layerTrails
         };
         L.control.layers(baseMaps, overlayMaps, { collapsed: false, position: 'topright' }).addTo(map);
 
@@ -355,19 +324,13 @@
         var legend = L.control({ position: 'bottomright' });
         legend.onAdd = function () {
             var div = L.DomUtil.create('div', 'legend');
-            div.innerHTML =
-                '<div class="legend-title">Легенда</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#6B3FA0">🏛️</div> Музей</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#4A5568">🏰</div> Крепост</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#2B6CB0">⛪</div> Църква / катедрала</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#2C5282">🕍</div> Манастир / параклис</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#744210">⛰️</div> Мегалит / скален обект</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#8B4513">🏛️</div> Други културни</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#38A169">🌳</div> Парк / гора</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#2B6CB0">💧</div> Водопад</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#D69E2E">🏖️</div> Плаж</div>' +
-                '<div class="legend-item"><div class="legend-icon" style="background:#276749">🍃</div> Други природни</div>' +
-                '<div class="legend-item"><div style="width:28px;height:0;border-top:4px solid #e63946;flex-shrink:0"></div> Туристически маршрут</div>';
+            var html = '<div class="legend-title">Легенда</div>';
+            Object.keys(Varna.categories).forEach(function (k) {
+                var c = Varna.categories[k];
+                html += '<div class="legend-item"><div class="legend-icon" style="background:' + c.color + '"><i class="fa-solid ' + c.icon + '"></i></div> ' + c.label + '</div>';
+            });
+            html += '<div class="legend-item"><div style="width:28px;height:0;border-top:4px solid #e63946;flex-shrink:0"></div> Туристически маршрут</div>';
+            div.innerHTML = html;
             return div;
         };
         legend.addTo(map);
