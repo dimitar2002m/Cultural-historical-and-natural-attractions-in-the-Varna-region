@@ -139,20 +139,22 @@
 <body class="map-page">
 <header class="site-header"><div class="container bar"><a class="logo" href="index.html"><span class="mark">⚓</span><span>Открий Варна<small>КАРТА · ОБЕКТИ · МАРШРУТИ</small></span></a><button class="nav-toggle" aria-label="Меню" aria-expanded="false">☰</button><nav aria-label="Основна навигация"><ul class="nav"><li><a href="index.html">Начало</a></li><li><a href="karta.html" class="active" aria-current="page">Карта</a></li><li><a href="obekti.html">Обекти</a></li><li><a href="marshruti.html">Маршрути</a></li><li><a href="za-proekta.html">За проекта</a></li></ul></nav></div></header>
     <div id="map"></div>
+    <script src="js/config.js"></script>
     <script src="js/qgis2web_expressions.js"></script>
     <script src="js/leaflet.js"></script>
     <script src="js/leaflet-hash.js"></script>
     <script src="js/Autolinker.min.js"></script>
-    <script src="data/_1.js"></script>
-    <script src="data/_2.js"></script>
-    <script src="data/_3.js"></script>
-    <script src="data/_boundary.js"></script>
+    <script src="data/kulturni.js"></script>
+    <script src="data/prirodni.js"></script>
+    <script src="data/marshruti.js"></script>
+    <script src="data/granitsa.js"></script>
     <script>
         var varnaBounds = L.geoJSON(json__boundary).getBounds();
         var map = L.map('map', {
             zoomControl: false,
             maxZoom: 18,
             minZoom: 9,
+            zoomSnap: 0.25,
             maxBounds: varnaBounds.pad(0.15),
             maxBoundsViscosity: 1.0
         });
@@ -180,17 +182,19 @@
             subdomains: 'abcd',
             maxZoom: 19
         });
-        var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles © Esri',
-            maxZoom: 18
-        });
-        var sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles © Esri, Maxar, Earthstar Geographics',
-            maxZoom: 18
-        });
         // OSM и CARTO често блокират заявки от файл (file://) без Referer. Тогава минаваме автоматично
         // към следващата фонова карта. Най-сигурно е картата да се отваря през http(s) (напр. GitHub Pages).
-        var chain = location.protocol === 'file:' ? [esri, topo, carto, osm] : [carto, osm, esri, topo];
+        // Фонове през API (MapTiler) – само ако е въведен ключ в js/config.js
+        var apiBases = {};
+        var key = (window.MAP_CONFIG && MAP_CONFIG.maptilerKey || '').trim();
+        if (key) {
+            var mtAttr = '© <a href="https://www.maptiler.com/copyright/">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+            apiBases['Улици (MapTiler)'] = L.tileLayer('https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=' + key, { attribution: mtAttr, maxZoom: 20 });
+            apiBases['Сателит (MapTiler)'] = L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=' + key, { attribution: mtAttr, maxZoom: 20 });
+            apiBases['Терен (MapTiler)'] = L.tileLayer('https://api.maptiler.com/maps/outdoor-v2/256/{z}/{x}/{y}.png?key=' + key, { attribution: mtAttr, maxZoom: 20 });
+        }
+        var free = location.protocol === 'file:' ? [topo, carto, osm] : [carto, osm, topo];
+        var chain = (key ? [apiBases['Улици (MapTiler)']] : []).concat(free);
         var active = 0;
         function useBase(i) {
             if (i >= chain.length) return;
@@ -297,9 +301,9 @@
             style: { color: '#c9a227', weight: 3, fill: false }, interactive: false
         }).addTo(map);
 
-        // Туристически маршрути (данни: data/_3.js, генерирани от GPX с tools/gpx_to_js.js)
+        // Туристически маршрути (данни: data/marshruti.js, генерирани от GPX с tools/gpx_to_js.js)
         // Цветове по подразбиране + приоритет на properties.Цвят (от маркировката)
-        var trailColors = ['#e63946', '#1d7874', '#7b2cbf', '#f77f00', '#2a6fdb', '#6a994e', '#d62828', '#8338ec'];
+        var trailColors = ['#e63946', '#1d7874', '#7b2cbf', '#f77f00', '#2a6fdb', '#6a994e', '#c2185b', '#8d6e63', '#00838f', '#ef6c00'];
         var trailLayers = {};
         var layerTrails = L.geoJSON(json__3, {
             style: function (feature) {
@@ -337,10 +341,9 @@
         var baseMaps = {
             "Светла (CARTO)": carto,
             "OpenStreetMap": osm,
-            "Улици (Esri)": esri,
-            "Сателит (Esri)": sat,
             "Топографска карта": topo
         };
+        Object.keys(apiBases).forEach(function (k) { baseMaps[k] = apiBases[k]; });
         var overlayMaps = {
             "🏛️ Културно-исторически обекти": layerCultural,
             "🌿 Природни обекти": layerNatural,
